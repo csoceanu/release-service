@@ -39,7 +39,7 @@ jobs:
       - name: Run Documentation Suggester
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          DOCS_REPO_URL: https://github.com/your-org/upstream-docs.git
+          DOCS_REPO_URL: ${{ secrets.DOCS_REPO_URL }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python scripts/suggest_docs.py

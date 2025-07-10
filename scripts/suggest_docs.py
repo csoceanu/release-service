@@ -80,12 +80,13 @@ Here is the full content of the current documentation file `{file_path}`:
 Analyze the diff and check whether **new, important information** is introduced that is not already covered in this file.
 
 - If the file already includes everything important, return exactly: `NO_UPDATE_NEEDED`
-- If the file is missing key information, return the **full updated file content** in valid .adoc format, with your additions inserted in the correct section.
+- If the file is missing key information, return the **full updated file content**, modifying only what is necessary. Do NOT add markdown syntax like \`\`\`adoc or similar — this is an AsciiDoc file, not Markdown.
 
 Do not explain or summarize — only return either:
 - `NO_UPDATE_NEEDED` (if nothing is missing), or
 - The full updated .adoc file content
 """
+
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",

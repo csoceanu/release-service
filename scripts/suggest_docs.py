@@ -1,26 +1,23 @@
 import os
 import subprocess
+import argparse
 from pathlib import Path
 from google import genai
 from google.genai import types
 
 # === CONFIG ===
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-
 DOCS_REPO_URL = os.environ["DOCS_REPO_URL"]
 BRANCH_NAME = "doc-update-from-pr"
-
 
 def get_diff():
     result = subprocess.run(["git", "diff", "origin/main...HEAD"], capture_output=True, text=True)
     return result.stdout.strip()
 
-
 def clone_docs_repo():
     subprocess.run(["git", "clone", DOCS_REPO_URL, "docs_repo"])
     os.chdir("docs_repo")
     subprocess.run(["git", "checkout", "-b", BRANCH_NAME])
-
 
 def get_file_previews():
     previews = []
@@ -33,7 +30,6 @@ def get_file_previews():
         except Exception as e:
             print(f"Skipping file {path}: {e}")
     return previews
-
 
 def ask_gemini_for_relevant_files(diff, file_previews):
     context = "\n\n".join(
@@ -62,14 +58,12 @@ Based on the diff, which files from this list should be updated? Return only the
     )
     return [line.strip() for line in response.text.strip().splitlines() if line.strip()]
 
-
 def load_full_content(file_path):
     try:
         return Path(file_path).read_text(encoding="utf-8")
     except Exception as e:
         print(f"Failed to read {file_path}: {e}")
         return ""
-
 
 def ask_gemini_for_updated_content(diff, file_path, current_content):
     prompt = f"""
@@ -102,8 +96,6 @@ Do not explain or summarize — only return either:
     )
     return response.text.strip()
 
-
-
 def overwrite_file(file_path, new_content):
     try:
         Path(file_path).write_text(new_content, encoding="utf-8")
@@ -112,13 +104,13 @@ def overwrite_file(file_path, new_content):
         print(f"Failed to write {file_path}: {e}")
         return False
 
-
 def push_and_open_pr(modified_files):
     subprocess.run(["git", "add"] + modified_files)
     subprocess.run([
-    "git", "commit",
-    "-m", "Auto-generated doc updates from code PR\n\nAssisted-by: Gemini"
-    ])    subprocess.run(["git", "push", "--set-upstream", "origin", BRANCH_NAME])
+        "git", "commit",
+        "-m", "Auto-generated doc updates from code PR\n\nAssisted-by: Gemini"
+    ])
+    subprocess.run(["git", "push", "--set-upstream", "origin", BRANCH_NAME])
     subprocess.run([
         "gh", "pr", "create",
         "--title", "Auto-Generated Doc Updates from Code PR",
@@ -128,8 +120,11 @@ def push_and_open_pr(modified_files):
         "--head", BRANCH_NAME
     ])
 
-
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dry-run", action="store_true", help="Simulate changes without writing files or pushing PR")
+    args = parser.parse_args()
+
     diff = get_diff()
     if not diff:
         print("No changes detected.")
@@ -159,17 +154,22 @@ def main():
             print(f"No update needed for {file_path}")
             continue
 
-        print(f"Updating {file_path}...")
-        if overwrite_file(file_path, updated):
-            modified_files.append(file_path)
+        if args.dry_run:
+            print(f"[Dry Run] Would update {file_path} with:\n{updated}\n")
+        else:
+            print(f"Updating {file_path}...")
+            if overwrite_file(file_path, updated):
+                modified_files.append(file_path)
 
     if modified_files:
-        push_and_open_pr(modified_files)
+        if args.dry_run:
+            print("[Dry Run] Would push and open PR for the following files:")
+            for f in modified_files:
+                print(f"- {f}")
+        else:
+            push_and_open_pr(modified_files)
     else:
         print("All documentation is already up to date — no PR created.")
 
-
-
 if __name__ == "__main__":
     main()
-

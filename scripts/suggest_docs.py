@@ -17,7 +17,18 @@ def get_diff():
 def clone_docs_repo():
     subprocess.run(["git", "clone", DOCS_REPO_URL, "docs_repo"])
     os.chdir("docs_repo")
-    subprocess.run(["git", "checkout", "-b", BRANCH_NAME])
+
+    # Try to check out the branch if it already exists
+    result = subprocess.run(["git", "ls-remote", "--heads", "origin", BRANCH_NAME], capture_output=True, text=True)
+    if result.stdout.strip():
+        print(f"Reusing existing branch: {BRANCH_NAME}")
+        subprocess.run(["git", "fetch", "origin", BRANCH_NAME])
+        subprocess.run(["git", "checkout", BRANCH_NAME])
+        subprocess.run(["git", "pull", "origin", BRANCH_NAME])
+    else:
+        print(f"Creating new branch: {BRANCH_NAME}")
+        subprocess.run(["git", "checkout", "-b", BRANCH_NAME])
+
 
 def get_file_previews():
     previews = []

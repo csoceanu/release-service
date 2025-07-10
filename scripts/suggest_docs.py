@@ -5,8 +5,7 @@ from google import genai
 from google.genai import types
 
 # === CONFIG ===
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-client = genai.Client()
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 DOCS_REPO_URL = os.environ["DOCS_REPO_URL"]
 BRANCH_NAME = "doc-update-from-pr"

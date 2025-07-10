@@ -110,7 +110,13 @@ def push_and_open_pr(modified_files):
         "git", "commit",
         "-m", "Auto-generated doc updates from code PR\n\nAssisted-by: Gemini"
     ])
+    # Add remote with token auth
+    gh_token = os.environ["GH_TOKEN"]
+    docs_repo_url = DOCS_REPO_URL.replace("https://", f"https://{gh_token}@")
+
+    subprocess.run(["git", "remote", "set-url", "origin", docs_repo_url])
     subprocess.run(["git", "push", "--set-upstream", "origin", BRANCH_NAME])
+
     subprocess.run([
         "gh", "pr", "create",
         "--title", "Auto-Generated Doc Updates from Code PR",

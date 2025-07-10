@@ -19,7 +19,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          pip install google-generativeai
+          pip install -U google-generativeai
 
       - name: Configure Git
         run: |

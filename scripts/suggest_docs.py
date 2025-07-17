@@ -80,6 +80,15 @@ def ask_gemini_for_updated_content(diff, file_path, current_content):
     prompt = f"""
 You are a documentation assistant.
 
+CRITICAL FORMATTING REQUIREMENTS FOR ASCIIDOC FILES:
+- NEVER use markdown code fences like ```adoc or ``` anywhere in the file
+- AsciiDoc files start directly with content (comments, headers, or text)  
+- Use ONLY AsciiDoc syntax: ==== for headers, |=== for tables, ---- for code blocks
+- Do NOT mix markdown and AsciiDoc syntax
+- Maintain proper table structures with matching |=== opening and closing
+- Keep all cross-references (xref) intact and properly formatted
+- Ensure consistent indentation and spacing
+
 A developer made the following code changes:
 {diff}
 
@@ -91,11 +100,18 @@ Here is the full content of the current documentation file `{file_path}`:
 Analyze the diff and check whether **new, important information** is introduced that is not already covered in this file.
 
 - If the file already includes everything important, return exactly: `NO_UPDATE_NEEDED`
-- If the file is missing key information, return the **full updated file content**, modifying only what is necessary. Do NOT add markdown syntax like \`\`\`adoc or similar — this is an AsciiDoc file, not Markdown.
+- If the file is missing key information, return the **full updated file content**, modifying only what is necessary. in valid AsciiDoc format
+
+VALIDATION CHECKLIST - Before responding, verify:
+1. No markdown code fences (```) anywhere in the content
+2. All tables have matching |=== opening and closing
+3. All section headers use correct ==== syntax  
+4. All cross-references are properly formatted
+5. No broken formatting or incomplete structures
 
 Do not explain or summarize — only return either:
 - `NO_UPDATE_NEEDED` (if nothing is missing), or
-- The full updated .adoc file content
+- The full updated AsciiDoc file content with perfect syntax (NO markdown!)
 """
 
 

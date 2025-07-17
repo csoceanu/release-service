@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: releaseserviceconfigs.appstudio.redhat.com
 spec:
   group: appstudio.redhat.com
@@ -42,30 +42,10 @@ spec:
           spec:
             description: ReleaseServiceConfigSpec defines the desired state of ReleaseServiceConfig.
             properties:
-              EmptyDirOverrides:
-                description: VolumeOverrides is a map containing the volume type for
-                  specific Pipeline git refs
-                items:
-                  description: EmptyDirOverrides defines the values usually set in
-                    a PipelineRef using a git resolver.
-                  properties:
-                    pathInRepo:
-                      description: PathInRepo is the path within the git repository
-                        where the Pipeline definition can be found
-                      type: string
-                    revision:
-                      description: Revision is the git revision where the Pipeline
-                        definition can be found
-                      type: string
-                    url:
-                      description: Url is the url to the git repo
-                      type: string
-                  required:
-                  - pathInRepo
-                  - revision
-                  - url
-                  type: object
-                type: array
+              advisoryRepo:
+                description: AdvisoryRepo is the repo to create advisories in during
+                  the managed release PipelineRun
+                type: string
               debug:
                 description: |-
                   Debug is the boolean that specifies whether or not the Release Service should run

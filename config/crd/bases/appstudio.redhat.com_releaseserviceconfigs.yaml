@@ -70,6 +70,92 @@ spec:
                       tasks
                     type: string
                 type: object
+              notificationSettings:
+                description: |-
+                  NotificationSettings configure how release notifications are sent
+                  to different stakeholders during the release process
+                properties:
+                  email:
+                    description: Email notification configuration
+                    properties:
+                      enabled:
+                        description: Enabled determines if email notifications are active
+                        type: boolean
+                      recipients:
+                        description: Recipients is a list of email addresses to notify
+                        items:
+                          type: string
+                        type: array
+                      onFailure:
+                        description: OnFailure sends notifications when releases fail
+                        type: boolean
+                      onSuccess:
+                        description: OnSuccess sends notifications when releases succeed
+                        type: boolean
+                    type: object
+                  slack:
+                    description: Slack notification configuration
+                    properties:
+                      enabled:
+                        description: Enabled determines if Slack notifications are active
+                        type: boolean
+                      webhookURL:
+                        description: WebhookURL is the Slack webhook URL for notifications
+                        type: string
+                      channel:
+                        description: Channel specifies the Slack channel to notify
+                        type: string
+                    type: object
+                type: object
+              securityPolicies:
+                description: |-
+                  SecurityPolicies define security requirements and constraints
+                  that must be enforced during the release process
+                properties:
+                  requireCodeSigning:
+                    description: RequireCodeSigning enforces that all artifacts must be digitally signed
+                    type: boolean
+                  allowedRegistries:
+                    description: AllowedRegistries is a list of container registries that releases can target
+                    items:
+                      type: string
+                    type: array
+                  vulnerabilityScanning:
+                    description: VulnerabilityScanning configuration for security checks
+                    properties:
+                      enabled:
+                        description: Enabled determines if vulnerability scanning is required
+                        type: boolean
+                      maxCriticalVulnerabilities:
+                        description: MaxCriticalVulnerabilities sets the maximum allowed critical CVEs
+                        type: integer
+                      maxHighVulnerabilities:
+                        description: MaxHighVulnerabilities sets the maximum allowed high-severity CVEs
+                        type: integer
+                    type: object
+                type: object
+              resourceLimits:
+                description: |-
+                  ResourceLimits define constraints on resource usage during release operations
+                  to prevent excessive consumption of cluster resources
+                properties:
+                  maxConcurrentReleases:
+                    description: MaxConcurrentReleases limits how many releases can run simultaneously
+                    type: integer
+                  pipelineResourceLimits:
+                    description: PipelineResourceLimits set CPU and memory constraints for release pipelines
+                    properties:
+                      cpu:
+                        description: CPU limit for release pipeline execution
+                        type: string
+                      memory:
+                        description: Memory limit for release pipeline execution
+                        type: string
+                    type: object
+                  timeoutGracePeriod:
+                    description: TimeoutGracePeriod defines how long to wait before forcefully terminating stuck releases
+                    type: string
+                type: object
             type: object
           status:
             description: ReleaseServiceConfigStatus defines the observed state of

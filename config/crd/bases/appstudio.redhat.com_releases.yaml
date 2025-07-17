@@ -72,6 +72,9 @@ spec:
                 description: Snapshot to be released
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
+              releaseType:
+                description: Type of the release (e.g., major, minor, patch)
+                type: string
             required:
             - releasePlan
             - snapshot

@@ -36,7 +36,8 @@ def get_file_previews():
     for path in adoc_files:
         try:
             with open(path, encoding="utf-8") as f:
-                first_lines = "".join([next(f) for _ in range(10)])
+                lines = f.readlines()[:10]  # Get first 10 lines (or fewer if file is short)
+                first_lines = "".join(lines)
                 previews.append((str(path), first_lines.strip()))
         except Exception as e:
             print(f"Skipping file {path}: {e}")

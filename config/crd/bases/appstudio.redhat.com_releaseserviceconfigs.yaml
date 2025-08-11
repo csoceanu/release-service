@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.16.1
   name: releaseserviceconfigs.appstudio.redhat.com
 spec:
   group: appstudio.redhat.com
@@ -24,28 +23,73 @@ spec:
           API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
             description: ReleaseServiceConfigSpec defines the desired state of ReleaseServiceConfig.
             properties:
-              advisoryRepo:
-                description: AdvisoryRepo is the repo to create advisories in during
-                  the managed release PipelineRun
-                type: string
+              EmptyDirOverrides:
+                description: VolumeOverrides is a map containing the volume type for
+                  specific Pipeline git refs
+                items:
+                  description: EmptyDirOverrides defines the values usually set in
+                    a PipelineRef using a git resolver.
+                  properties:
+                    pathInRepo:
+                      description: PathInRepo is the path within the git repository
+                        where the Pipeline definition can be found
+                      type: string
+                    revision:
+                      description: Revision is the git revision where the Pipeline
+                        definition can be found
+                      type: string
+                    url:
+                      description: Url is the url to the git repo
+                      type: string
+                  required:
+                  - pathInRepo
+                  - revision
+                  - url
+                  type: object
+                type: array
               debug:
-                description: Debug is the boolean that specifies whether or not the
-                  Release Service should run in debug mode
+                description: |-
+                  Debug is the boolean that specifies whether or not the Release Service should run
+                  in debug mode
                 type: boolean
+              defaultTimeouts:
+                description: |-
+                  DefaultTimeouts contain the default Tekton timeouts to be used in case they are
+                  not specified in the ReleasePlanAdmission resource.
+                properties:
+                  finally:
+                    description: Finally sets the maximum allowed duration of this
+                      pipeline's finally
+                    type: string
+                  pipeline:
+                    description: Pipeline sets the maximum allowed duration for execution
+                      of the entire pipeline. The sum of individual timeouts for tasks
+                      and finally must not exceed this value.
+                    type: string
+                  tasks:
+                    description: Tasks sets the maximum allowed duration of this pipeline's
+                      tasks
+                    type: string
+                type: object
             type: object
           status:
             description: ReleaseServiceConfigStatus defines the observed state of
@@ -56,9 +100,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

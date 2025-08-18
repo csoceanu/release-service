@@ -198,9 +198,30 @@ def overwrite_file(file_path, new_content):
 
 def push_and_open_pr(modified_files, commit_info=None):
     subprocess.run(["git", "add"] + modified_files)
+    
+    # Build commit message with source commit references
+    commit_msg = "Auto-generated doc updates from code PR"
+    
+    if commit_info:
+        commit_msg += f"\n\nSource commits from {commit_info['repo_url'].split('/')[-1]}:"
+        for commit_line in commit_info['commits_list']:
+            # Extract hash and message from markdown format
+            # Format: "- [hash](url) message"
+            if commit_line.startswith("- [") and "](" in commit_line:
+                start = commit_line.find("[") + 1
+                end = commit_line.find("]")
+                hash_part = commit_line[start:end]
+                msg_start = commit_line.find(") ") + 2
+                msg_part = commit_line[msg_start:] if msg_start > 1 else ""
+                commit_msg += f"\n- {hash_part}: {msg_part}"
+            
+        commit_msg += f"\n\nLatest: {commit_info['short_hash']} - {commit_info['commit_message']}"
+    
+    commit_msg += "\n\nAssisted-by: Gemini"
+    
     subprocess.run([
         "git", "commit",
-        "-m", "Auto-generated doc updates from code PR\n\nAssisted-by: Gemini"
+        "-m", commit_msg
     ])
     # Add remote with token auth
     gh_token = os.environ["GH_TOKEN"]
@@ -209,15 +230,10 @@ def push_and_open_pr(modified_files, commit_info=None):
     subprocess.run(["git", "remote", "set-url", "origin", docs_repo_url])
     subprocess.run(["git", "push", "--set-upstream", "origin", BRANCH_NAME, "--force"])
 
-    # Build PR body with commit references
+    # Build PR body (simple, without commit references)
     pr_body = "This PR updates the following documentation files based on code changes:\n\n"
     pr_body += "\n".join([f"- `{f}`" for f in modified_files])
-    
-    if commit_info:
-        pr_body += "\n\n## Source Code Changes\n\n"
-        pr_body += f"These documentation updates are based on the following commits from [{commit_info['repo_url'].split('/')[-1]}]({commit_info['repo_url']}):\n\n"
-        pr_body += "\n".join(commit_info['commits_list'])
-        pr_body += f"\n\n**Latest commit:** [{commit_info['short_hash']}]({commit_info['repo_url']}/commit/{commit_info['current_commit']})"
+    pr_body += "\n\n*Note: Each commit in this PR contains references to the specific source code commits that triggered the documentation updates.*"
 
     subprocess.run([
         "gh", "pr", "create",
@@ -279,11 +295,28 @@ def main():
             print("[Dry Run] Would push and open PR for the following files:")
             for f in modified_files:
                 print(f"- {f}")
+            
             if commit_info:
-                print(f"\n[Dry Run] PR would include commit references from: {commit_info['repo_url']}")
-                print("[Dry Run] Source commits:")
-                for commit in commit_info['commits_list']:
-                    print(f"  {commit}")
+                # Show what the commit message would look like
+                commit_msg = "Auto-generated doc updates from code PR"
+                commit_msg += f"\n\nSource commits from {commit_info['repo_url'].split('/')[-1]}:"
+                for commit_line in commit_info['commits_list']:
+                    if commit_line.startswith("- [") and "](" in commit_line:
+                        start = commit_line.find("[") + 1
+                        end = commit_line.find("]")
+                        hash_part = commit_line[start:end]
+                        msg_start = commit_line.find(") ") + 2
+                        msg_part = commit_line[msg_start:] if msg_start > 1 else ""
+                        commit_msg += f"\n- {hash_part}: {msg_part}"
+                commit_msg += f"\n\nLatest: {commit_info['short_hash']} - {commit_info['commit_message']}"
+                commit_msg += "\n\nAssisted-by: Gemini"
+                
+                print(f"\n[Dry Run] Commit message would be:")
+                print("=" * 50)
+                print(commit_msg)
+                print("=" * 50)
+                
+                print(f"\n[Dry Run] PR body would be simple (commit references are in commit message only)")
         else:
             push_and_open_pr(modified_files, commit_info)
     else:

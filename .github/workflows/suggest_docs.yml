@@ -1,25 +1,38 @@
-name: Suggest Documentation Update
+name: Suggest Documentation Update (Enhanced)
 
 on:
   pull_request:
     types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run even if filters would normally skip'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   suggest-docs:
     runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.force_run == 'true' ||
+      contains(github.event.pull_request.title, '[update-docs]') ||
+      contains(github.event.pull_request.body, '[update-docs]')
 
     steps:
       - name: Checkout PR Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: '3.10'
 
       - name: Install Python Dependencies
         run: |
-          pip install google-generativeai
+          pip install -U google-genai
 
       - name: Configure Git
         run: |
@@ -28,18 +41,13 @@ jobs:
 
       - name: Set up GitHub CLI
         run: |
-          sudo apt-get install gh
-
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "${GH_TOKEN}" | gh auth login --with-token
+          sudo apt-get update
+          sudo apt-get install -y gh
 
       - name: Run Documentation Suggester
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DOCS_REPO_URL: ${{ secrets.DOCS_REPO_URL }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           python scripts/suggest_docs.py

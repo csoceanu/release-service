@@ -41,37 +41,14 @@ def get_commit_info():
         # Get commit message
         commit_msg = subprocess.run(["git", "log", "-1", "--pretty=format:%s", commit_hash], capture_output=True, text=True)
         
-        # Get commits in the range from main to HEAD
-        commits_log = subprocess.run(["git", "log", "--oneline", "origin/main...HEAD"], capture_output=True, text=True)
-        
-        if commits_log.returncode == 0 and commits_log.stdout.strip():
-            # Multiple commits
-            commits = commits_log.stdout.strip().split('\n')
-            commit_list = []
-            for commit_line in commits:
-                if commit_line.strip():
-                    parts = commit_line.split(' ', 1)
-                    if len(parts) >= 2:
-                        hash_part = parts[0]
-                        msg_part = parts[1]
-                        commit_list.append(f"- [{hash_part}]({repo_url}/commit/{hash_part}) {msg_part}")
-            
-            return {
-                'repo_url': repo_url,
-                'current_commit': commit_hash,
-                'short_hash': short_hash,
-                'commit_message': commit_msg.stdout.strip() if commit_msg.returncode == 0 else '',
-                'commits_list': commit_list
-            }
-        else:
-            # Single commit or no commits
-            return {
-                'repo_url': repo_url,
-                'current_commit': commit_hash,
-                'short_hash': short_hash,
-                'commit_message': commit_msg.stdout.strip() if commit_msg.returncode == 0 else '',
-                'commits_list': [f"- [{short_hash}]({repo_url}/commit/{commit_hash}) {commit_msg.stdout.strip() if commit_msg.returncode == 0 else ''}"]
-            }
+        # Just get the current commit that triggered the pipeline
+        return {
+            'repo_url': repo_url,
+            'current_commit': commit_hash,
+            'short_hash': short_hash,
+            'commit_message': commit_msg.stdout.strip() if commit_msg.returncode == 0 else '',
+            'commits_list': [f"- [{short_hash}]({repo_url}/commit/{commit_hash}) {commit_msg.stdout.strip() if commit_msg.returncode == 0 else ''}"]
+        }
             
     except Exception as e:
         print(f"Warning: Could not get commit info: {e}")
@@ -203,19 +180,10 @@ def push_and_open_pr(modified_files, commit_info=None):
     commit_msg = "Auto-generated doc updates from code PR"
     
     if commit_info:
-        commit_msg += f"\n\nSource commits from {commit_info['repo_url'].split('/')[-1]}:"
-        for commit_line in commit_info['commits_list']:
-            # Extract hash and message from markdown format
-            # Format: "- [hash](url) message"
-            if commit_line.startswith("- [") and "](" in commit_line:
-                start = commit_line.find("[") + 1
-                end = commit_line.find("]")
-                hash_part = commit_line[start:end]
-                msg_start = commit_line.find(") ") + 2
-                msg_part = commit_line[msg_start:] if msg_start > 1 else ""
-                commit_msg += f"\n- {hash_part}: {msg_part}"
-            
-        commit_msg += f"\n\nLatest: {commit_info['short_hash']} - {commit_info['commit_message']}"
+        repo_name = commit_info['repo_url'].split('/')[-1]
+        commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
+        commit_msg += f"\nMessage: {commit_info['commit_message']}"
+        commit_msg += f"\nLink: {commit_info['repo_url']}/commit/{commit_info['current_commit']}"
     
     commit_msg += "\n\nAssisted-by: Gemini"
     
@@ -298,17 +266,11 @@ def main():
             
             if commit_info:
                 # Show what the commit message would look like
+                repo_name = commit_info['repo_url'].split('/')[-1]
                 commit_msg = "Auto-generated doc updates from code PR"
-                commit_msg += f"\n\nSource commits from {commit_info['repo_url'].split('/')[-1]}:"
-                for commit_line in commit_info['commits_list']:
-                    if commit_line.startswith("- [") and "](" in commit_line:
-                        start = commit_line.find("[") + 1
-                        end = commit_line.find("]")
-                        hash_part = commit_line[start:end]
-                        msg_start = commit_line.find(") ") + 2
-                        msg_part = commit_line[msg_start:] if msg_start > 1 else ""
-                        commit_msg += f"\n- {hash_part}: {msg_part}"
-                commit_msg += f"\n\nLatest: {commit_info['short_hash']} - {commit_info['commit_message']}"
+                commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
+                commit_msg += f"\nMessage: {commit_info['commit_message']}"
+                commit_msg += f"\nLink: {commit_info['repo_url']}/commit/{commit_info['current_commit']}"
                 commit_msg += "\n\nAssisted-by: Gemini"
                 
                 print(f"\n[Dry Run] Commit message would be:")
@@ -316,7 +278,7 @@ def main():
                 print(commit_msg)
                 print("=" * 50)
                 
-                print(f"\n[Dry Run] PR body would be simple (commit references are in commit message only)")
+                print(f"\n[Dry Run] PR body would be simple (commit reference is in commit message only)")
         else:
             push_and_open_pr(modified_files, commit_info)
     else:

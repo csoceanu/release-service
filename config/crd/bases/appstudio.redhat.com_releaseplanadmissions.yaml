@@ -24,11 +24,20 @@ spec:
     - jsonPath: .spec.origin
       name: Origin
       type: string
+    - jsonPath: .spec.approvalMode
+      name: Approval
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .spec.autoRelease
+      name: Auto-Release
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ReleasePlanAdmission is the Schema for the ReleasePlanAdmissions
-          API.
+          API. This resource controls approval workflows and automated release processes for applications.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -51,6 +60,16 @@ spec:
                 items:
                   type: string
                 type: array
+              approvalMode:
+                description: ApprovalMode defines the approval process for releases (manual, automatic, or policy-based)
+                enum:
+                - manual
+                - automatic
+                - policy-based
+                type: string
+              autoRelease:
+                description: AutoRelease enables automatic release creation when conditions are met
+                type: boolean
               data:
                 description: Data is an unstructured key used for providing data for
                   the release Pipeline
@@ -61,6 +80,25 @@ spec:
                   release the Application
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
+              notificationConfig:
+                description: NotificationConfig defines notification settings for release events
+                properties:
+                  channels:
+                    description: Channels specifies where notifications should be sent (e.g., slack, email)
+                    items:
+                      type: string
+                    type: array
+                  events:
+                    description: Events specifies which events trigger notifications
+                    items:
+                      enum:
+                      - release-started
+                      - release-completed
+                      - release-failed
+                      - approval-required
+                      type: string
+                    type: array
+                type: object
               origin:
                 description: Origin references where the release requests should come
                   from
@@ -111,6 +149,7 @@ spec:
                 type: string
             required:
             - applications
+            - approvalMode
             - origin
             - pipelineRef
             - policy
@@ -206,6 +245,15 @@ spec:
                       type: string
                   type: object
                 type: array
+              phase:
+                description: Phase represents the current phase of the ReleasePlanAdmission (e.g., Active, Pending, Disabled, Error)
+                enum:
+                - Active
+                - Pending
+                - Disabled
+                - Error
+                - Validating
+                type: string
             type: object
         type: object
     served: true

@@ -22,6 +22,12 @@ spec:
     - jsonPath: .spec.releasePlan
       name: ReleasePlan
       type: string
+    - jsonPath: .spec.environment
+      name: Environment
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
     - jsonPath: .status.conditions[?(@.type=="Released")].reason
       name: Release status
       type: string
@@ -31,7 +37,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Release is the Schema for the releases API
+        description: Release is the Schema for the releases API. This resource manages application releases across different environments with rollback capabilities.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -48,15 +54,32 @@ spec:
           spec:
             description: ReleaseSpec defines the desired state of Release.
             properties:
+              environment:
+                description: Environment specifies the target deployment environment (e.g., development, staging, production)
+                enum:
+                - development
+                - staging
+                - production
+                - testing
+                type: string
+              gracePeriodSeconds:
+                description: GracePeriodSeconds defines the grace period for release shutdown operations
+                format: int64
+                minimum: 0
+                type: integer
               releasePlan:
                 description: ReleasePlan to use for this particular Release
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
+              rollbackEnabled:
+                description: RollbackEnabled indicates whether automatic rollback is enabled for this release
+                type: boolean
               snapshot:
                 description: Snapshot to be released
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
             required:
+            - environment
             - releasePlan
             - snapshot
             type: object
@@ -80,6 +103,16 @@ spec:
                 description: Automated indicates whether the Release was created as
                   part of an automated process or manually by an end-user
                 type: boolean
+              phase:
+                description: Phase represents the current phase of the Release lifecycle (e.g., Preparing, InProgress, Completed, Failed, RolledBack)
+                enum:
+                - Preparing
+                - InProgress
+                - Completed
+                - Failed
+                - RolledBack
+                - Cancelled
+                type: string
               completionTime:
                 description: CompletionTime is the time when a Release was completed
                 format: date-time

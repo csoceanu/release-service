@@ -46,7 +46,7 @@ spec:
             properties:
               application:
                 description: Application is a reference to the application to be released
-                  in the managed namespace
+                  in the managed namespace. Must be a valid application name.
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
               data:

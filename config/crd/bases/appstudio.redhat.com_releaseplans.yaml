@@ -26,6 +26,12 @@ spec:
     - jsonPath: .spec.target
       name: Target
       type: string
+    - jsonPath: .spec.releaseStrategy
+      name: Strategy
+      type: string
+    - jsonPath: .status.phase
+      name: Status
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -54,16 +60,34 @@ spec:
               displayName:
                 description: DisplayName is the long name of the ReleasePlan
                 type: string
+              releaseStrategy:
+                description: ReleaseStrategy defines the approach for releasing the application (e.g., rolling, blue-green, canary)
+                enum:
+                - rolling
+                - blue-green
+                - canary
+                - immediate
+                type: string
               target:
                 description: Target references where to send the release requests
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
             required:
             - application
+            - displayName
             - target
             type: object
           status:
             description: ReleasePlanStatus defines the observed state of ReleasePlan.
+            properties:
+              phase:
+                description: Phase represents the current phase of the ReleasePlan (e.g., Pending, InProgress, Completed, Failed)
+                enum:
+                - Pending
+                - InProgress
+                - Completed
+                - Failed
+                type: string
             type: object
         type: object
     served: true

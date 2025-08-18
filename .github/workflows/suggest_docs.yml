@@ -3,9 +3,6 @@ name: Suggest Documentation Update (Enhanced)
 on:
   pull_request:
     types: [opened, synchronize]
-    paths-ignore:
-      - 'scripts/suggest_docs.py'
-      - '.github/workflows/suggest_docs.yml'
   workflow_dispatch:
     inputs:
       force_run:

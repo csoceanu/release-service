@@ -38,15 +38,11 @@ def get_commit_info():
         # Get commit details
         short_hash = commit_hash[:7]
         
-        # Get commit message for the same commit
-        commit_msg = subprocess.run(["git", "log", "-1", "--pretty=format:%s", commit_hash], capture_output=True, text=True)
-        
         # Just get the current commit that triggered the pipeline
         return {
             'repo_url': repo_url,
             'current_commit': commit_hash,
-            'short_hash': short_hash,
-            'commit_message': commit_msg.stdout.strip() if commit_msg.returncode == 0 else ''
+            'short_hash': short_hash
         }
             
     except Exception as e:
@@ -182,7 +178,6 @@ def push_and_open_pr(modified_files, commit_info=None):
         repo_name = commit_info['repo_url'].split('/')[-1]
         commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
         commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
-        commit_msg += f"\nMessage: {commit_info['commit_message']}"
         commit_msg += f"\nLink: {commit_url}"
     
     commit_msg += "\n\nAssisted-by: Gemini"
@@ -225,7 +220,7 @@ def main():
     commit_info = get_commit_info()
     if commit_info:
         print(f"Source repository: {commit_info['repo_url']}")
-        print(f"Latest commit: {commit_info['short_hash']} - {commit_info['commit_message']}")
+        print(f"Latest commit: {commit_info['short_hash']}")
     
     clone_docs_repo()
     previews = get_file_previews()
@@ -270,7 +265,6 @@ def main():
                 commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
                 commit_msg = "Auto-generated doc updates from code PR"
                 commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
-                commit_msg += f"\nMessage: {commit_info['commit_message']}"
                 commit_msg += f"\nLink: {commit_url}"
                 commit_msg += "\n\nAssisted-by: Gemini"
                 

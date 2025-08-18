@@ -17,10 +17,11 @@ def get_diff():
 def get_commit_info():
     """Get commit information for the documentation PR reference"""
     try:
-        # Get current commit hash
-        current_commit = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True)
-        if current_commit.returncode != 0:
+        # Get the HEAD commit - this is what GitHub Actions checked out for the PR
+        current_commit_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True)
+        if current_commit_result.returncode != 0:
             return None
+        commit_hash = current_commit_result.stdout.strip()
         
         # Get remote origin URL to construct proper commit links
         remote_url = subprocess.run(["git", "config", "--get", "remote.origin.url"], capture_output=True, text=True)
@@ -35,10 +36,9 @@ def get_commit_info():
             repo_url = repo_url.replace(".git", "")
         
         # Get commit details
-        commit_hash = current_commit.stdout.strip()
         short_hash = commit_hash[:7]
         
-        # Get commit message
+        # Get commit message for the same commit
         commit_msg = subprocess.run(["git", "log", "-1", "--pretty=format:%s", commit_hash], capture_output=True, text=True)
         
         # Just get the current commit that triggered the pipeline
@@ -46,8 +46,7 @@ def get_commit_info():
             'repo_url': repo_url,
             'current_commit': commit_hash,
             'short_hash': short_hash,
-            'commit_message': commit_msg.stdout.strip() if commit_msg.returncode == 0 else '',
-            'commits_list': [f"- [{short_hash}]({repo_url}/commit/{commit_hash}) {commit_msg.stdout.strip() if commit_msg.returncode == 0 else ''}"]
+            'commit_message': commit_msg.stdout.strip() if commit_msg.returncode == 0 else ''
         }
             
     except Exception as e:
@@ -181,9 +180,10 @@ def push_and_open_pr(modified_files, commit_info=None):
     
     if commit_info:
         repo_name = commit_info['repo_url'].split('/')[-1]
+        commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
         commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
         commit_msg += f"\nMessage: {commit_info['commit_message']}"
-        commit_msg += f"\nLink: {commit_info['repo_url']}/commit/{commit_info['current_commit']}"
+        commit_msg += f"\nLink: {commit_url}"
     
     commit_msg += "\n\nAssisted-by: Gemini"
     
@@ -267,10 +267,11 @@ def main():
             if commit_info:
                 # Show what the commit message would look like
                 repo_name = commit_info['repo_url'].split('/')[-1]
+                commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
                 commit_msg = "Auto-generated doc updates from code PR"
                 commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
                 commit_msg += f"\nMessage: {commit_info['commit_message']}"
-                commit_msg += f"\nLink: {commit_info['repo_url']}/commit/{commit_info['current_commit']}"
+                commit_msg += f"\nLink: {commit_url}"
                 commit_msg += "\n\nAssisted-by: Gemini"
                 
                 print(f"\n[Dry Run] Commit message would be:")

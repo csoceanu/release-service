@@ -87,6 +87,11 @@ spec:
                 - warn
                 - error
                 type: string
+              retryAttempts:
+                description: RetryAttempts specifies the maximum number of retry attempts for failed pipeline runs
+                minimum: 0
+                maximum: 10
+                type: integer
               defaultTimeouts:
                 description: |-
                   DefaultTimeouts contain the default Tekton timeouts to be used in case they are

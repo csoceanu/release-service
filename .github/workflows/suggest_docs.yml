@@ -72,13 +72,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gh
 
-      - name: Debug Environment Variables
+      - name: Debug and Set PR Variables
+        id: pr_vars
         run: |
+          echo "Debug: Event type: ${{ github.event_name }}"
           echo "Debug: Issue number from event: ${{ github.event.issue.number }}"
+          echo "Debug: Is pull request: ${{ github.event.issue.pull_request != null }}"
           echo "Debug: PR info step outputs:"
           echo "  pr_number: ${{ steps.pr_info.outputs.pr_number }}"
           echo "  base_ref: ${{ steps.pr_info.outputs.base_ref }}"
           echo "  head_ref: ${{ steps.pr_info.outputs.head_ref }}"
+          
+          # Set the PR number with fallback logic
+          if [ -n "${{ steps.pr_info.outputs.pr_number }}" ]; then
+            PR_NUM="${{ steps.pr_info.outputs.pr_number }}"
+          elif [ -n "${{ github.event.issue.number }}" ]; then
+            PR_NUM="${{ github.event.issue.number }}"
+          else
+            PR_NUM="unknown"
+          fi
+          
+          echo "Final PR_NUMBER: $PR_NUM"
+          echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
 
       - name: Run Documentation Suggester
         env:
@@ -86,7 +101,7 @@ jobs:
           DOCS_REPO_URL: ${{ secrets.DOCS_REPO_URL }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
           PR_BASE: origin/${{ steps.pr_info.outputs.base_ref || 'main' }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ steps.pr_vars.outputs.pr_number }}
           PR_HEAD_SHA: ${{ steps.pr_info.outputs.head_ref }}
         run: |
           echo "Environment variables being passed to script:"

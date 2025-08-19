@@ -101,5 +101,5 @@ jobs:
             export PR_NUMBER="${{ github.event.issue.number }}"
             echo "Updated PR_NUMBER: '$PR_NUMBER'"
           fi
-          
+
           python scripts/suggest_docs.py

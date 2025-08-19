@@ -11,12 +11,49 @@ DOCS_REPO_URL = os.environ["DOCS_REPO_URL"]
 BRANCH_NAME = "doc-update-from-pr"
 
 def get_diff():
-    result = subprocess.run(["git", "diff", "origin/main...HEAD"], capture_output=True, text=True)
-    return result.stdout.strip()
+    """Get the full diff for the entire PR, not just the latest commit"""
+    # First, try to get PR base from environment (set by GitHub Actions)
+    pr_base = os.environ.get("PR_BASE", "origin/main")
+    pr_number = os.environ.get("PR_NUMBER", "unknown")
+    
+    print(f"Getting diff for PR #{pr_number} against base: {pr_base}")
+    
+    # Get the merge-base to ensure we capture all PR changes
+    merge_base_result = subprocess.run(
+        ["git", "merge-base", pr_base, "HEAD"], 
+        capture_output=True, text=True
+    )
+    
+    if merge_base_result.returncode == 0:
+        # Use merge-base to get all changes in the PR branch
+        merge_base = merge_base_result.stdout.strip()
+        print(f"Using merge-base: {merge_base[:7]}...{merge_base[-7:]}")
+        result = subprocess.run(
+            ["git", "diff", f"{merge_base}...HEAD"], 
+            capture_output=True, text=True
+        )
+        diff_method = f"merge-base ({merge_base[:7]}...HEAD)"
+    else:
+        # Fallback to the original method
+        print("Warning: Could not find merge-base, using fallback diff method")
+        result = subprocess.run(
+            ["git", "diff", f"{pr_base}...HEAD"], 
+            capture_output=True, text=True
+        )
+        diff_method = f"direct ({pr_base}...HEAD)"
+    
+    diff_content = result.stdout.strip()
+    print(f"Diff method: {diff_method}")
+    print(f"Diff size: {len(diff_content)} characters")
+    
+    return diff_content
 
 def get_commit_info():
-    """Get commit information for the documentation PR reference"""
+    """Get PR information for the documentation PR reference"""
     try:
+        # Get PR number from environment if available
+        pr_number = os.environ.get("PR_NUMBER")
+        
         # Get the HEAD commit - this is what GitHub Actions checked out for the PR
         current_commit_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True)
         if current_commit_result.returncode != 0:
@@ -38,12 +75,18 @@ def get_commit_info():
         # Get commit details
         short_hash = commit_hash[:7]
         
-        # Just get the current commit that triggered the pipeline
-        return {
+        # Return PR information if available, otherwise fallback to commit info
+        result = {
             'repo_url': repo_url,
             'current_commit': commit_hash,
             'short_hash': short_hash
         }
+        
+        if pr_number:
+            result['pr_number'] = pr_number
+            result['pr_url'] = f"{repo_url}/pull/{pr_number}"
+        
+        return result
             
     except Exception as e:
         print(f"Warning: Could not get commit info: {e}")
@@ -171,14 +214,22 @@ def overwrite_file(file_path, new_content):
 def push_and_open_pr(modified_files, commit_info=None):
     subprocess.run(["git", "add"] + modified_files)
     
-    # Build commit message with source commit references
+    # Build commit message with source PR/commit references
     commit_msg = "Auto-generated doc updates from code PR"
     
     if commit_info:
         repo_name = commit_info['repo_url'].split('/')[-1]
-        commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
-        commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
-        commit_msg += f"\nLink: {commit_url}"
+        
+        # Prefer PR reference over single commit reference
+        if 'pr_number' in commit_info:
+            commit_msg += f"\n\nSource PR: #{commit_info['pr_number']} from {repo_name}"
+            commit_msg += f"\nPR Link: {commit_info['pr_url']}"
+            commit_msg += f"\nLatest commit: {commit_info['short_hash']}"
+        else:
+            # Fallback to commit reference if no PR info available
+            commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
+            commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
+            commit_msg += f"\nLink: {commit_url}"
     
     commit_msg += "\n\nAssisted-by: Gemini"
     
@@ -262,10 +313,19 @@ def main():
             if commit_info:
                 # Show what the commit message would look like
                 repo_name = commit_info['repo_url'].split('/')[-1]
-                commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
                 commit_msg = "Auto-generated doc updates from code PR"
-                commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
-                commit_msg += f"\nLink: {commit_url}"
+                
+                # Prefer PR reference over single commit reference
+                if 'pr_number' in commit_info:
+                    commit_msg += f"\n\nSource PR: #{commit_info['pr_number']} from {repo_name}"
+                    commit_msg += f"\nPR Link: {commit_info['pr_url']}"
+                    commit_msg += f"\nLatest commit: {commit_info['short_hash']}"
+                else:
+                    # Fallback to commit reference if no PR info available
+                    commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
+                    commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
+                    commit_msg += f"\nLink: {commit_url}"
+                
                 commit_msg += "\n\nAssisted-by: Gemini"
                 
                 print(f"\n[Dry Run] Commit message would be:")

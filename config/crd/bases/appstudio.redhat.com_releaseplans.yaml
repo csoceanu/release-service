@@ -90,7 +90,7 @@ spec:
                 type: object
               serviceAccount:
                 description: ServiceAccount is the name of the service account to
-                  use in the release Pipeline to gain elevated privileges
+                  use in the Pipeline to gain elevated privileges
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
               target:

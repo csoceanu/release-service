@@ -64,9 +64,6 @@ spec:
                 - integration
                 - qa
                 - uat
-                - production-like
-                - production-like-2
-                - production-like-3
                 type: string
               gracePeriodSeconds:
                 description: GracePeriodSeconds defines the grace period for release shutdown operations

@@ -287,7 +287,7 @@ def main():
     if not diff:
         print("No changes detected.")
         return
-
+    print(f"diff: {diff}")
     # Get commit info before switching to docs repo
     commit_info = get_commit_info()
     if commit_info:

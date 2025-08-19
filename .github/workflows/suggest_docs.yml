@@ -34,6 +34,8 @@ jobs:
           PR_DATA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER)
           echo "head_ref=$(echo "$PR_DATA" | jq -r '.head.ref')" >> $GITHUB_OUTPUT
           echo "head_repo=$(echo "$PR_DATA" | jq -r '.head.repo.full_name')" >> $GITHUB_OUTPUT
+          echo "base_ref=$(echo "$PR_DATA" | jq -r '.base.ref')" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Checkout PR Code
         uses: actions/checkout@v3
@@ -67,5 +69,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DOCS_REPO_URL: ${{ secrets.DOCS_REPO_URL }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
+          PR_BASE: origin/${{ steps.pr_info.outputs.base_ref || 'main' }}
+          PR_NUMBER: ${{ steps.pr_info.outputs.pr_number || github.event.issue.number }}
+          PR_HEAD_SHA: ${{ steps.pr_info.outputs.head_ref }}
         run: |
           python scripts/suggest_docs.py

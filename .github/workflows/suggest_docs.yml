@@ -11,6 +11,11 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
 jobs:
   suggest-docs:
     runs-on: ubuntu-latest

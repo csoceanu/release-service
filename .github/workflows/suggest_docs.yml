@@ -1,25 +1,51 @@
-name: Suggest Documentation Update
+name: Suggest Documentation Update (Enhanced)
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run even if filters would normally skip'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   suggest-docs:
     runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.force_run == 'true' ||
+      (github.event.issue.pull_request && contains(github.event.comment.body, '[update-docs]'))
 
     steps:
+      - name: Get PR information
+        id: pr_info
+        if: github.event.issue.pull_request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=${{ github.event.issue.number }}
+          PR_DATA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER)
+          echo "head_ref=$(echo "$PR_DATA" | jq -r '.head.ref')" >> $GITHUB_OUTPUT
+          echo "head_repo=$(echo "$PR_DATA" | jq -r '.head.repo.full_name')" >> $GITHUB_OUTPUT
+
       - name: Checkout PR Code
         uses: actions/checkout@v3
+        with:
+          repository: ${{ steps.pr_info.outputs.head_repo || github.repository }}
+          ref: ${{ steps.pr_info.outputs.head_ref || github.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: '3.10'
 
       - name: Install Python Dependencies
         run: |
-          pip install google-generativeai
+          pip install -U google-genai
 
       - name: Configure Git
         run: |
@@ -28,18 +54,13 @@ jobs:
 
       - name: Set up GitHub CLI
         run: |
-          sudo apt-get install gh
-
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "${GH_TOKEN}" | gh auth login --with-token
+          sudo apt-get update
+          sudo apt-get install -y gh
 
       - name: Run Documentation Suggester
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DOCS_REPO_URL: ${{ secrets.DOCS_REPO_URL }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           python scripts/suggest_docs.py

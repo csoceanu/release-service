@@ -11,6 +11,11 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
 jobs:
   suggest-docs:
     runs-on: ubuntu-latest
@@ -19,13 +24,6 @@ jobs:
       (github.event.issue.pull_request && contains(github.event.comment.body, '[update-docs]'))
 
     steps:
-      - name: Debug Event Information
-        run: |
-          echo "Event name: ${{ github.event_name }}"
-          echo "Has PR: ${{ github.event.issue.pull_request != null }}"
-          echo "Comment body: ${{ github.event.comment.body }}"
-          echo "Force run: ${{ github.event.inputs.force_run }}"
-          echo "Repository: ${{ github.repository }}"
       - name: Get PR information
         id: pr_info
         if: github.event.issue.pull_request

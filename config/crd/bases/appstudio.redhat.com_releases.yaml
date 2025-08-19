@@ -61,8 +61,8 @@ spec:
                 x-kubernetes-preserve-unknown-fields: true
               gracePeriodDays:
                 description: |-
-                  GracePeriodDays is the number of days a Release should be kept
-                  This value is used to define the Release ExpirationTime
+                  GracePeriodDays is the number of days a Release should be kept after completion
+                  This value is used to define the Release ExpirationTime for cleanup purposes
                 type: integer
               releasePlan:
                 description: ReleasePlan to use for this particular Release
@@ -99,7 +99,7 @@ spec:
                 type: object
               automated:
                 description: Automated indicates whether the Release was created as
-                  part of an automated process or manually by an end-user
+                  part of an automated workflow process or manually by an end-user
                 type: boolean
               collectors:
                 description: Collectors is an unstructured key used for storing all

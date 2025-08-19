@@ -151,7 +151,16 @@ Based on the diff, which files from this list should be updated? Return only the
             thinking_config=types.ThinkingConfig(thinking_budget=0)
         ),
     )
-    return [line.strip() for line in response.text.strip().splitlines() if line.strip()]
+    
+    # Filter out source code files - only keep .adoc documentation files
+    suggested_files = [line.strip() for line in response.text.strip().splitlines() if line.strip()]
+    filtered_files = [f for f in suggested_files if f.endswith('.adoc')]
+    
+    if len(filtered_files) != len(suggested_files):
+        skipped = [f for f in suggested_files if not f.endswith('.adoc')]
+        print(f"Skipping non-documentation files: {skipped}")
+    
+    return filtered_files
 
 def load_full_content(file_path):
     try:

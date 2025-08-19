@@ -314,7 +314,7 @@ spec:
                   managed processing
                 properties:
                   completionTime:
-                    description: CompletionTime is the time when the Release processing
+                    description: CompletionTime is the time when the processing
                       was completed
                     format: date-time
                     type: string

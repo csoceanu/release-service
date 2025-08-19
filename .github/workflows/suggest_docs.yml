@@ -87,8 +87,19 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
           PR_HEAD_SHA: ${{ steps.pr_info.outputs.head_ref }}
         run: |
-          echo "Environment variables being passed to script:"
-          echo "PR_BASE: $PR_BASE"
-          echo "PR_NUMBER: $PR_NUMBER"
-          echo "PR_HEAD_SHA: $PR_HEAD_SHA"
+          echo "=== DEBUG: Environment variables being passed to script ==="
+          echo "PR_BASE: '$PR_BASE'"
+          echo "PR_NUMBER: '$PR_NUMBER'"
+          echo "PR_HEAD_SHA: '$PR_HEAD_SHA'"
+          echo "Issue number from event: '${{ github.event.issue.number }}'"
+          echo "Event type: '${{ github.event_name }}'"
+          echo "============================================================"
+          
+          # Explicitly set PR_NUMBER if it's empty
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
+            echo "WARNING: PR_NUMBER is empty or null, setting to issue number"
+            export PR_NUMBER="${{ github.event.issue.number }}"
+            echo "Updated PR_NUMBER: '$PR_NUMBER'"
+          fi
+          
           python scripts/suggest_docs.py

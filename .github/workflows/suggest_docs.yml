@@ -31,11 +31,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER=${{ github.event.issue.number }}
+          echo "Extracting PR information for PR #$PR_NUMBER"
           PR_DATA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER)
-          echo "head_ref=$(echo "$PR_DATA" | jq -r '.head.ref')" >> $GITHUB_OUTPUT
-          echo "head_repo=$(echo "$PR_DATA" | jq -r '.head.repo.full_name')" >> $GITHUB_OUTPUT
-          echo "base_ref=$(echo "$PR_DATA" | jq -r '.base.ref')" >> $GITHUB_OUTPUT
+          
+          HEAD_REF=$(echo "$PR_DATA" | jq -r '.head.ref')
+          HEAD_REPO=$(echo "$PR_DATA" | jq -r '.head.repo.full_name')
+          BASE_REF=$(echo "$PR_DATA" | jq -r '.base.ref')
+          
+          echo "head_ref=$HEAD_REF" >> $GITHUB_OUTPUT
+          echo "head_repo=$HEAD_REPO" >> $GITHUB_OUTPUT
+          echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          
+          echo "PR info extracted: #$PR_NUMBER, base: $BASE_REF, head: $HEAD_REF"
 
       - name: Checkout PR Code
         uses: actions/checkout@v3
@@ -64,13 +72,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gh
 
+      - name: Debug Environment Variables
+        run: |
+          echo "Debug: Issue number from event: ${{ github.event.issue.number }}"
+          echo "Debug: PR info step outputs:"
+          echo "  pr_number: ${{ steps.pr_info.outputs.pr_number }}"
+          echo "  base_ref: ${{ steps.pr_info.outputs.base_ref }}"
+          echo "  head_ref: ${{ steps.pr_info.outputs.head_ref }}"
+
       - name: Run Documentation Suggester
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DOCS_REPO_URL: ${{ secrets.DOCS_REPO_URL }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
           PR_BASE: origin/${{ steps.pr_info.outputs.base_ref || 'main' }}
-          PR_NUMBER: ${{ steps.pr_info.outputs.pr_number || github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.issue.number }}
           PR_HEAD_SHA: ${{ steps.pr_info.outputs.head_ref }}
         run: |
+          echo "Environment variables being passed to script:"
+          echo "PR_BASE: $PR_BASE"
+          echo "PR_NUMBER: $PR_NUMBER"
+          echo "PR_HEAD_SHA: $PR_HEAD_SHA"
           python scripts/suggest_docs.py

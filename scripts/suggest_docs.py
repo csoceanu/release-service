@@ -53,6 +53,7 @@ def get_commit_info():
     try:
         # Get PR number from environment if available
         pr_number = os.environ.get("PR_NUMBER")
+        print(f"Debug: PR_NUMBER from environment: '{pr_number}'")
         
         # Get the HEAD commit - this is what GitHub Actions checked out for the PR
         current_commit_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True)
@@ -82,9 +83,13 @@ def get_commit_info():
             'short_hash': short_hash
         }
         
-        if pr_number:
+        # Check if we have a valid PR number (not None, not empty, not "unknown")
+        if pr_number and pr_number.strip() and pr_number != "unknown":
             result['pr_number'] = pr_number
             result['pr_url'] = f"{repo_url}/pull/{pr_number}"
+            print(f"Debug: Using PR info - PR #{pr_number}")
+        else:
+            print(f"Debug: No valid PR number, falling back to commit info")
         
         return result
             

@@ -28,6 +28,17 @@ def get_diff():
         # Use merge-base to get all changes in the PR branch
         merge_base = merge_base_result.stdout.strip()
         print(f"Using merge-base: {merge_base[:7]}...{merge_base[-7:]}")
+        
+        # Show which files changed in the entire PR
+        files_result = subprocess.run(
+            ["git", "diff", "--name-only", f"{merge_base}...HEAD"], 
+            capture_output=True, text=True
+        )
+        if files_result.returncode == 0:
+            changed_files = files_result.stdout.strip().split('\n')
+            changed_files = [f for f in changed_files if f.strip()]
+            print(f"Files changed in entire PR: {changed_files}")
+        
         result = subprocess.run(
             ["git", "diff", f"{merge_base}...HEAD"], 
             capture_output=True, text=True
@@ -228,22 +239,18 @@ def overwrite_file(file_path, new_content):
 def push_and_open_pr(modified_files, commit_info=None):
     subprocess.run(["git", "add"] + modified_files)
     
-    # Build commit message with source PR/commit references
-    commit_msg = "Auto-generated doc updates from code PR"
+    # Build commit message with useful links
+    commit_msg = "Auto-generated doc updates from code changes"
     
     if commit_info:
-        repo_name = commit_info['repo_url'].split('/')[-1]
-        
-        # Prefer PR reference over single commit reference
         if 'pr_number' in commit_info:
-            commit_msg += f"\n\nSource PR: #{commit_info['pr_number']} from {repo_name}"
-            commit_msg += f"\nPR Link: {commit_info['pr_url']}"
+            commit_msg += f"\n\nPR Link: {commit_info['pr_url']}"
             commit_msg += f"\nLatest commit: {commit_info['short_hash']}"
         else:
             # Fallback to commit reference if no PR info available
             commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
-            commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
-            commit_msg += f"\nLink: {commit_url}"
+            commit_msg += f"\n\nCommit Link: {commit_url}"
+            commit_msg += f"\nLatest commit: {commit_info['short_hash']}"
     
     commit_msg += "\n\nAssisted-by: Gemini"
     
@@ -326,19 +333,16 @@ def main():
             
             if commit_info:
                 # Show what the commit message would look like
-                repo_name = commit_info['repo_url'].split('/')[-1]
-                commit_msg = "Auto-generated doc updates from code PR"
+                commit_msg = "Auto-generated doc updates from code changes"
                 
-                # Prefer PR reference over single commit reference
                 if 'pr_number' in commit_info:
-                    commit_msg += f"\n\nSource PR: #{commit_info['pr_number']} from {repo_name}"
-                    commit_msg += f"\nPR Link: {commit_info['pr_url']}"
+                    commit_msg += f"\n\nPR Link: {commit_info['pr_url']}"
                     commit_msg += f"\nLatest commit: {commit_info['short_hash']}"
                 else:
                     # Fallback to commit reference if no PR info available
                     commit_url = f"{commit_info['repo_url']}/commit/{commit_info['current_commit']}"
-                    commit_msg += f"\n\nSource commit: {commit_info['short_hash']} from {repo_name}"
-                    commit_msg += f"\nLink: {commit_url}"
+                    commit_msg += f"\n\nCommit Link: {commit_url}"
+                    commit_msg += f"\nLatest commit: {commit_info['short_hash']}"
                 
                 commit_msg += "\n\nAssisted-by: Gemini"
                 

@@ -61,6 +61,7 @@ spec:
                 - staging
                 - production
                 - testing
+                - preview
                 type: string
               gracePeriodSeconds:
                 description: GracePeriodSeconds defines the grace period for release shutdown operations

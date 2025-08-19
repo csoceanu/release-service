@@ -16,11 +16,18 @@ spec:
     singular: releaseserviceconfig
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.debug
+      name: Debug
+      type: boolean
+    - jsonPath: .spec.logLevel
+      name: Log Level
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ReleaseServiceConfig is the Schema for the releaseserviceconfigs
-          API
+          API. This resource manages global configuration settings for the release service.
         properties:
           apiVersion:
             description: |-
@@ -71,6 +78,20 @@ spec:
                   Debug is the boolean that specifies whether or not the Release Service should run
                   in debug mode
                 type: boolean
+              logLevel:
+                description: LogLevel defines the logging verbosity level for the release service
+                enum:
+                - trace
+                - debug
+                - info
+                - warn
+                - error
+                type: string
+              retryAttempts:
+                description: RetryAttempts specifies the maximum number of retry attempts for failed pipeline runs
+                minimum: 0
+                maximum: 10
+                type: integer
               defaultTimeouts:
                 description: |-
                   DefaultTimeouts contain the default Tekton timeouts to be used in case they are

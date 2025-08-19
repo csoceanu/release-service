@@ -45,7 +45,7 @@ spec:
             description: ReleasePlanSpec defines the desired state of ReleasePlan.
             properties:
               application:
-                description: Application is a reference to the application to be released
+                description: Application is a reference to the application component to be released
                   in the managed namespace
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
@@ -90,7 +90,7 @@ spec:
                 type: object
               serviceAccount:
                 description: ServiceAccount is the name of the service account to
-                  use in the Pipeline to gain elevated privileges
+                  use in the release Pipeline to gain elevated privileges
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
               target:

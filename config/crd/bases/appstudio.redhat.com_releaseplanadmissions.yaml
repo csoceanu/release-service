@@ -33,6 +33,9 @@ spec:
     - jsonPath: .spec.autoRelease
       name: Auto-Release
       type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:

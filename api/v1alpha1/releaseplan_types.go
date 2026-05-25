@@ -52,16 +52,26 @@ type ReleasePlanSpec struct {
 	// +optional
 	FinalPipeline *tektonutils.ParameterizedPipeline `json:"finalPipeline,omitempty"`
 
-	// ReleaseGracePeriodDays is the number of days a Release should be kept
+	// RetentionDays is the number of days a Release should be kept
 	// This value is used to define the Release ExpirationTime
-	// +kubebuilder:default:=7
+	// +kubebuilder:default:=14
 	// +optional
-	ReleaseGracePeriodDays int `json:"releaseGracePeriodDays,omitempty"`
+	RetentionDays int `json:"retentionDays,omitempty"`
 
 	// Target references where to send the release requests
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	// +optional
 	Target string `json:"target,omitempty"`
+
+	// NotificationRecipients is a list of email addresses to notify when a Release
+	// is created, completes, or fails. If empty, no notifications are sent.
+	// +optional
+	NotificationRecipients []string `json:"notificationRecipients,omitempty"`
+
+	// RequireApproval when set to true, Releases created from this ReleasePlan
+	// will be held in a pending state until manually approved. Defaults to false.
+	// +optional
+	RequireApproval bool `json:"requireApproval,omitempty"`
 }
 
 // MatchedReleasePlanAdmission defines the relevant information for a matched ReleasePlanAdmission.
